@@ -1,17 +1,19 @@
-import sys, threading
-
+import sys
+from threading import Thread
 from typer import Typer
 from rich import print as rprint
-
 from requests import get, Response
 from bs4 import BeautifulSoup, Tag
 
+
 app: Typer = Typer(no_args_is_help=True)
+
 
 dead_links: list[str] = []
 
 def external_link(href: str) -> bool:
     return href and href.startswith(('http://', 'https://'))
+
 
 def dead_link(href: str) -> bool:
     def inner():
@@ -40,17 +42,24 @@ def url(url: str):
     page_text: str = main_source.text
     soup: BeautifulSoup = BeautifulSoup(page_text, 'lxml')
     
-    links: list[Tag] = soup.find_all('a', href=external_link, limit=4)
+    links: list[Tag] = soup.find_all('a', href=external_link)
     
+    threads: list[Thread] = []
     for link in links:
         href: str = link.get('href')
-        threading.Thread(target=dead_link(href), daemon=True).start()
+        link_thread: Thread = Thread(target=dead_link(href))
+        threads.append(link_thread)
+
+    for thread in threads:
+        thread.start()
+        thread.join()
         
     if dead_links:
         print("Dead Links:")
         print(*dead_links, sep='\n')
     else:
         print("Page has no dead links.")
+
 
 if __name__ == "__main__":
     app()
