@@ -42,7 +42,7 @@ def dead_link(href: str) -> bool:
 
 @app.command()
 def url(url: str):
-    "Search all links on the given webpage and prints the dead links."
+    "Search all links on the given webpage and print the dead links."
     print(f"\nURL: {url}\n")
     rprint("[cyan]Scanning page...\n")
     try:
