@@ -64,7 +64,8 @@ def url(url: str):
 
     for thread in threads:
         thread.start()
-        thread.join()
+
+    (thread.join() for thread in threads)
         
     if dead_links:
         print("Dead Links:")
