@@ -1,7 +1,12 @@
+import sys
+
 from typer import Typer
 from rich import print as rprint
-import requests
-from bs4 import BeautifulSoup
+
+from requests import get, Response
+from bs4 import BeautifulSoup, ResultSet
+
+from typing import Any
 
 
 app: Typer = Typer(no_args_is_help=True)
@@ -9,13 +14,16 @@ app: Typer = Typer(no_args_is_help=True)
 @app.command()
 def url(url: str):
     try:
-        page: str = requests.get(url=url).text
-        soup: BeautifulSoup	= BeautifulSoup(page, 'html.parser')
-        print(soup.title)
-    except Exception:
-        rprint("\n[red]error[/red]::Connection Failed")
-    
+        main_source: Response = get('https://google.com', timeout=10)
+    except Exception as e:
+        rprint(f"[red]error[/red]::Could not connect to url")
+        print()
+        sys.exit(e)
 
+    page_text: str = main_source.text
+    soup: BeautifulSoup = BeautifulSoup(page_text, 'lxml')
+    
+    
 
 if __name__ == "__main__":
     app()
