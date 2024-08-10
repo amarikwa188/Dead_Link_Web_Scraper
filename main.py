@@ -1,7 +1,8 @@
-import sys
+import sys, time
 from threading import Thread
 from typer import Typer
 from rich import print as rprint
+from rich.progress import track, Progress, TaskID
 from requests import get, Response
 from bs4 import BeautifulSoup, Tag
 
@@ -44,7 +45,7 @@ def dead_link(href: str) -> bool:
 def url(url: str):
     "Search all links on the given webpage and print the dead links."
     print(f"\nURL: {url}\n")
-    rprint("[cyan]Scanning page...\n")
+    # rprint("[cyan]Scanning page...\n")
     try:
         main_source: Response = get(url, timeout=10)
     except Exception as e:
@@ -56,23 +57,25 @@ def url(url: str):
     
     links: list[Tag] = soup.find_all('a', href=external_link)
 
-    threads: list[Thread] = []
-    for link in links:
-        href: str = link.get('href')
-        link_thread: Thread = Thread(target=dead_link(href), daemon=True)
-        threads.append(link_thread)
+    with Progress() as progress:
+        task: TaskID = progress.add_task("[cyan]Scanning Page...", total=len(links))
 
-    for thread in threads:
-        thread.start()
+        threads: list[Thread] = []
+        for link in links:
+            href: str = link.get('href')
+            link_thread: Thread = Thread(target=dead_link(href), daemon=True)
+            threads.append(link_thread)
 
-    for thread in threads:
-        thread.join()
-        
+        for thread in threads:
+            thread.start()
+            progress.update(task, advance=1)
+            time.sleep(1)
+
     if dead_links:
-        print("Dead Links:")
+        print("\nDead Links:")
         print(*dead_links, sep='\n')
     else:
-        print("Page has no dead links.")
+        print("\nPage has no dead links.")
 
 
 if __name__ == "__main__":
